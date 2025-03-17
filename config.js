@@ -4,8 +4,8 @@ module.exports = {
     },
     autoUpdate: {
         enabled: false,
-        packageJsonURL: "https://raw.githubusercontent.com/efebagri/node-paste-server/master/package.json",
-        zipURL: "https://github.com/efebagri/node-paste-server/archive/master.zip",
+        packageJsonURL: "https://raw.githubusercontent.com/efebagri/node-paste-server/main/package.json",
+        zipURL: "https://github.com/efebagri/node-paste-server/archive/main.zip",
         keepFiles: [],
         devPackageJsonURL: "https://raw.githubusercontent.com/efebagri/node-paste-server/development/package.json",
         devZipUrl: "https://github.com/efebagri/node-paste-server/archive/development.zip"
