@@ -1,0 +1,29 @@
+{
+  "name": "exbil-paste-server",
+  "version": "1.16.4",
+  "description": "Exbil Paste Server to upload text or code",
+  "repository": "https://github.com/exbil/exbil-paste-server",
+  "authors": [
+    {
+      "name": "Efe Bagri",
+      "email": "efe.bagri@exbil.net"
+    }
+  ],
+  "readme": "README.md",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "arangojs": "^7.6.1",
+    "body-parser": "latest",
+    "express": "^4.19.2",
+    "express-rate-limit": "^5.5.1",
+    "fs-extra": "latest",
+    "redis": "^3.1.2",
+    "request": "latest",
+    "serve-static": "^1.13.2",
+    "unzipper": "^0.10.10"
+  }
+}
