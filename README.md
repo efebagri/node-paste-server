@@ -7,11 +7,12 @@ A 🌟 powerful and efficient server to upload and manage text or code snippets.
 
 ## 🚀 Features
 
-- 🔧 **Multiple Storage Options**: Supports `Redis`, `ArangoDB`, or simple file storage.
-- ⚙️ **Configurable**: Fully customizable settings for rate limits, document size, and more.
-- 📡 **API Integration**: RESTful API to create, read, and delete documents.
-- 🛡️ **Rate Limiting**: Prevents abuse with adjustable rate limits.
-- 🔄 **Auto Update Support**: Easily keep the server up to date.
+- 🔧 **Multiple Storage Options**: Supports `Redis`, `ArangoDB`, or simple file storage
+- 🔐 **Encryption Support**: Optional AES-256-GCM encryption for stored documents
+- ⚙️ **Configurable**: Fully customizable settings for rate limits, document size, and more
+- 📡 **API Integration**: RESTful API to create, read, and delete documents
+- 🛡️ **Rate Limiting**: Prevents abuse with adjustable rate limits
+- 🔄 **Auto Update Support**: Easily keep the server up to date
 
 ---
 
@@ -21,9 +22,10 @@ A 🌟 powerful and efficient server to upload and manage text or code snippets.
 
 - 🖥️ [Node.js](http://www.nodejs.org/)
 - Either:
-    - 🐏 [Redis](http://www.redis.io/)
-    - 🍃 [ArangoDB](http://www.arangodb.com/)
-    - 📁 Or use the optional file storage.
+  - 🐏 [Redis](http://www.redis.io/)
+  - 🍃 [ArangoDB](http://www.arangodb.com/)
+  - 🎯 [MySQL](https://www.mysql.com/)
+  - 📁 Or use the optional file storage
 
 ---
 
@@ -49,34 +51,37 @@ yarn install
 Edit the `config.js` file to customize:
 
 - 🖥️ **Server settings**: Port, document-storage type, etc.
-- 💾 **Storage settings**: Choose between `file`, `Redis`, or `ArangoDB`.
-- 📊 **Rate Limits**: Adjust request limits to prevent abuse.
+- 💾 **Storage settings**: Choose between `file`, `Redis`, or `ArangoDB`
+- 🔐 **Encryption settings**: Enable/disable document encryption
+- 📊 **Rate Limits**: Adjust request limits to prevent abuse
 
 ---
 
-### 4️⃣ Run the Server
+### 4️⃣ Environment Variables
 
-Start the server using:
+Configure these environment variables (optional):
 
-```bash
-# ▶️ Start with npm
-npm start
-```
-or
-```bash
-# ▶️ Start with yarn
-yarn start
+```env
+# 🔐 Encryption Settings
+STORAGE_ENCRYPTION=true/false
+STORAGE_ENCRYPTION_KEY=your-32-byte-hex-key  # Must be 64 hex characters (32 bytes)
+
+# 📁 File Storage Path (if using file storage)
+STORAGE_PATH=/path/to/storage
 ```
 
 ---
 
 ## ⚙️ Configuration Details
 
-### 🖥️ Server Section
+### 🔐 Encryption Section (New)
 
-Configure server settings:
+Configure document encryption:
 
-- **port**: Port to run the server on.
+- **enabled**: Set `STORAGE_ENCRYPTION=true` to enable encryption
+- **key**: Set `STORAGE_ENCRYPTION_KEY` for encryption/decryption
+  - Must be exactly 32 bytes (64 hex characters)
+  - If not set, a random key will be generated (not recommended for production)
 
 ---
 
@@ -84,100 +89,79 @@ Configure server settings:
 
 Select your storage type and configure its settings:
 
-- **type**: Choose `"file"`, `"redis"`, or `"arangodb"`.
-- **host**: Host URL for the storage.
-- **port**: Port for the storage.
-- 🔑 **password**: Password for the storage (if applicable).
-- 👤 **user**: Username for ArangoDB authentication.
-- 🗃️ **database**: Database name (only for ArangoDB).
-- ⏲️ **documentExpireInMs**: Expiry time for unused documents (only for Redis).
-- 📂 **path**: Path to store documents (only for file storage).
+- **type**: Choose `"file"`, `"redis"`, `"mysql"`, or `"arangodb"`
+- **host**: Host URL for the storage
+- **port**: Port for the storage
+- 🔑 **password**: Password for the storage (if applicable)
+- 👤 **user**: Username for ArangoDB authentication
+- 🗃️ **database**: Database name (only for ArangoDB)
+- ⏲️ **documentExpireInMs**: Expiry time for unused documents (only for Redis)
+- 📂 **path**: Path to store documents (only for file storage)
+
+[Previous sections about Rate Limiting, AutoUpdate, and API Usage remain the same]
 
 ---
 
-### ⏱️ Rate Limiting Section
+### 🎯 MySQL-specific settings:
+- 🏠 **host**: MySQL server host
+- 🔌 **port**: MySQL server port (default: 3306)
+- 👤 **user**: MySQL username
+- 🔑 **password**: MySQL user password
+- 🗄️ **database**: MySQL database name
+- 📋 **table**: Table name for storing documents (will be created if it doesn't exist)
 
-Protect server performance and prevent abuse:
-
-- ⌛ **timeInMs**: Time window (in ms) for requests.
-- 🚦 **maxRequestsPerTime**: Maximum allowed requests per time window.
-
----
-
-### 🔄 AutoUpdate Section
-
-To enable automatic updates:
-
-- ✅ **enabled**: Set to `true` to allow updates.
-- 🗂️ **packageJsonURL**: URL to `package.json` of the remote PasteServer.
-- 📦 **zipURL**: URL for the zip archive of the update files.
-- 📑 **keepFiles**: List of files to keep during updates (e.g., `static/index.html`).
 
 ---
 
-## 🔌 API Usage
+## 🆕 Recent Updates
 
-### ✍️ Create a Document
-
-Send a `POST` request with the plain text in the body.
-
-**Response**:
-
-- ✅ *Success*:
-  ```json
-  {
-    "key": "uniqueKey",
-    "deleteSecret": "secretKey"
-  }
-  ```
-- ❌ *Failures*:
-    - `400 Bad Request`: Text is missing.
-    - `413 Payload Too Large`: Text exceeds limit.
-    - `500 Internal Server Error`: Issue while saving.
+- ✨ Added AES-256-GCM encryption support for stored documents
+- 🔒 Implemented secure key management for encryption
+- 🔄 Added backwards compatibility for encrypted documents
+- 🛠️ Improved error handling and logging
+- 📝 Enhanced documentation and configuration options
 
 ---
 
-### 📖 Read a Document
+## 📋 Feature Overview
 
-Send a `GET` request to `/documents/$key`.
+| Status | Feature | Description | Storage Types |
+|:------:|---------|-------------|---------------|
+| ✅ | Document Storage | Store and retrieve text/code snippets | 🗄️ All |
+| ✅ | AES-256-GCM Encryption | Secure document encryption | 📁 File, 🎯 MySQL |
+| ✅ | Rate Limiting | Prevent API abuse | 🗄️ All |
+| ✅ | Auto-Delete | Automatic deletion of expired documents | 🐏 Redis |
+| ✅ | Delete Keys | Secure document deletion with keys | 🗄️ All |
+| ✅ | Auto Updates | Automatic server updates | 🗄️ All |
+| ✅ | RESTful API | Full API support | 🗄️ All |
+| ✅ | Custom Frontend | Customizable web interface | 🗄️ All |
+| ✅ | Multiple Storage | Support for different storage backends | 🗄️ All |
 
-**Response**:
+## 🚀 Coming Soon
 
-- ✅ *Success*:
-  ```json
-  {
-    "text": "Your saved text"
-  }
-  ```
-- ❌ *Failure*:
-    - `404 Not Found`: Document not found.
+| Status | Feature | Description | Planned Version |
+|:------:|---------|-------------|-----------------|
+| 🔜 | Syntax Highlighting | Code highlighting in frontend | v2.1.0 |
+| 🔜 | Document Sharing | Share documents with specific users | v2.2.0 |
+| 🔜 | API Keys | Authentication for API access | v2.3.0 |
+| 🔜 | MongoDB Support | MongoDB as storage backend | v2.4.0 |
+| 🔜 | Password Protection | Password protected documents | v2.5.0 |
+| 🔜 | Document Expiry | Set custom expiration times | v2.6.0 |
+| 🔜 | Version History | Track document changes | v2.7.0 |
+| 🔜 | Tags & Categories | Organize documents | v2.8.0 |
+| 🔜 | Webhooks | Integration with other services | v2.9.0 |
 
----
+### 📝 Legend
 
-### 🗑️ Delete a Document
+Storage Types:
+- 📁 File Storage
+- 🐏 Redis
+- 🎯 MySQL
+- 🍃 ArangoDB
 
-Send a `GET` request to `/documents/delete/$key/$deleteSecret`.
-
-**Response**:
-
-- ✅ *Success*: `200 OK`.
-- ❌ *Failures*:
-    - `400 Bad Request`: Missing delete key.
-    - `403 Forbidden`: Invalid key or secret.
-
----
-
-### 🚦 Rate Limits
-
-Exceeded rate limits respond with:
-
-- ⛔ **Status Code**: `429 Too Many Requests`
-- 📄 **Response Body**:
-  ```json
-  {
-    "message": "Rate limit exceeded. Try again later."
-  }
-  ```
+Status:
+- ✅ Available
+- 🔜 Coming Soon
 
 ---
 

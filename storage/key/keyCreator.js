@@ -1,10 +1,11 @@
 class KeyCreator {
 
-    constructor(keyGeneratorConfig) {
-        this.chars = keyGeneratorConfig.keyChars;
-        if (keyGeneratorConfig.withToUpperCase)
+    constructor() {
+        this.chars = process.env.KEY_CHARS;
+        if (process.env.WITH_TO_UPPERCASE === 'true') {
             this.chars += this.chars.toUpperCase();
-        this.keyLength = keyGeneratorConfig.keyLength;
+        }
+        this.keyLength = parseInt(process.env.KEY_LENGTH);
     }
 
     create(keyLength, chars) {
@@ -19,7 +20,6 @@ class KeyCreator {
 
         return key;
     }
-
 }
 
-module.exports = new KeyCreator(require("../../config").keyGenerator);
+module.exports = new KeyCreator();

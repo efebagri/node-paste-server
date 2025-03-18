@@ -1,16 +1,15 @@
 const express = require("express");
+const package = require("../package.json");
+const autoUpdater = require("../autoUpdater");
 const router = express.Router();
-
 const crypto = require("crypto");
-const config = require("../config");
+const rateLimit = require("express-rate-limit");
 const keyCreator = require("../storage/key/keyCreator");
 let documentStorage;
 
-// Putting a rateLimit on the creating and deleting of documents to avoid crashes
-const rateLimit = require("express-rate-limit");
 const rateLimitHandler = rateLimit({
-    windowMs: config.createRateLimit.timeInMs,
-    max: config.createRateLimit.maxRequestsPerTime,
+    windowMs: parseInt(process.env.RATE_LIMIT_TIME_MS),
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS),
     message: {message: "Request limit reached. Try again later"}
 });
 
@@ -25,9 +24,29 @@ const rawBodyHandler = (request, response, next) => {
     });
 };
 
+router.get("/version", async (request, response) => {
+    response.setHeader("Content-Type", "application/json");
+
+    try {
+        const updateAvailable = await autoUpdater.checkForUpdates(false);
+        const newestVersion = updateAvailable ? "verfügbar" : autoUpdater.currentVersion;
+
+        response.json({
+            version: autoUpdater.currentVersion,
+            updateAvailable: updateAvailable,
+            newestVersion: newestVersion
+        });
+    } catch (error) {
+        response.json({
+            version: autoUpdater.currentVersion,
+            updateAvailable: false,
+            error: "Update-Prüfung fehlgeschlagen"
+        });
+    }
+});
+
 router.post("/", rateLimitHandler, rawBodyHandler, async (request, response) => {
     const text = request.rawBody;
-
     response.setHeader("Content-Type", "application/json");
 
     if (!text) {
@@ -35,20 +54,21 @@ router.post("/", rateLimitHandler, rawBodyHandler, async (request, response) => 
         return;
     }
 
-    const maxLength = config.document.maxLength;
+    const maxLength = parseInt(process.env.DOCUMENT_MAX_LENGTH);
     if (text && text.length < maxLength) {
         const key = keyCreator.create();
-
         const deleteSecret = keyCreator.create(Math.floor(Math.random() * 16) + 12);
         const deleteSecretHash = crypto.createHash("sha256").update(deleteSecret).digest("hex");
 
         if (await documentStorage.save(key, deleteSecretHash, text, false)) {
             console.log(`Created document: ${key}.`);
             await response.status(201).json({key: key, deleteSecret: deleteSecret});
-        } else
+        } else {
             await response.status(500).json({message: "Failed to save document"});
-    } else
+        }
+    } else {
         await response.status(413).json({message: `Text too long (max. ${maxLength})`});
+    }
 });
 
 router.get("/", (request, response) => {
@@ -57,14 +77,13 @@ router.get("/", (request, response) => {
 
 router.get("/:key", async (request, response) => {
     const key = request.params.key;
-
     response.setHeader("Content-Type", "application/json");
 
     const text = await documentStorage.load(key);
 
-    if (text == null)
+    if (text == null) {
         await response.status(404).json({message: "No document found"});
-    else {
+    } else {
         console.log(`Sending document: ${key}.`);
         await response.json({text: text});
     }
@@ -85,9 +104,9 @@ router.delete("/delete/:key/:deleteSecret", rateLimitHandler, async (request, re
     if (await documentStorage.deleteBySecret(key, deleteSecretHash)) {
         console.log(`Deleted document: ${key}.`);
         await response.json({message: "Success"});
-    } else
+    } else {
         await response.status(403).json({message: "You entered the wrong secret or the document does not exist"});
-
+    }
 });
 
 module.exports = storage => {

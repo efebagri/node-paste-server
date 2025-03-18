@@ -6,31 +6,58 @@
 
     const serveStatic = require("serve-static");
     const bodyParser = require("body-parser");
-    const config = require("./config");
+    require('dotenv').config();
     const autoUpdater = require("./autoUpdater");
 
     console.log(`Starting PasteServer v${autoUpdater.currentVersion}...`);
 
     // update-check
     const updateAvailable = await autoUpdater.checkForUpdates();
-    if (updateAvailable && config.autoUpdate.enabled) {
+    if (updateAvailable && process.env.AUTO_UPDATE_ENABLED === 'true') {
         if (await autoUpdater.downloadUpdate())
             await autoUpdater.installUpdate();
     }
 
     // connecting to the given database
-    const database = config.storage.type;
+    const database = process.env.DB_CONNECTION;
     console.log(`Trying to use database '${database}'...`);
-    const documentStorage = database === "file" ? require("./storage/fileStorage") :
-        database === "arangodb" ? require("./storage/arangoStorage") : require("./storage/redisStorage");
+    const documentStorage =
+        database === "file" ? require("./storage/fileStorage") :
+            database === "arangodb" ? require("./storage/arangoStorage") :
+                database === "mysql" ? require("./storage/mysqlStorage") :
+                    require("./storage/redisStorage");
     if (!documentStorage) {
         console.log(`There is no support for '${database}'!`);
         process.exit();
     }
-    await documentStorage.prepare(config.storage);
+
+    // Prepare storage configuration
+    const storageConfig = {
+        type: process.env.DB_CONNECTION,
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
+        password: process.env.DB_PASSWORD,
+        user: process.env.DB_USERNAME,
+        database: process.env.DB_DATABASE,
+        documentExpireInMs: parseInt(process.env.DOCUMENT_EXPIRE_MS),
+        path: process.env.STORAGE_PATH,
+        redis: {
+            enabled: process.env.REDIS_ENABLED === 'true',
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT),
+            password: process.env.REDIS_PASSWORD,
+            ttl: parseInt(process.env.REDIS_CACHE_TTL)
+        }
+    };
+
+    await documentStorage.prepare(storageConfig);
 
     // bodyParser to handle requests in json-format
-    const jsonParser = bodyParser.json({limit: config.document.dataLimit, extended: true});
+    const jsonParser = bodyParser.json({
+        limit: process.env.DOCUMENT_DATA_LIMIT,
+        extended: true
+    });
+
     app.use((request, response, next) =>
         request.path.toLowerCase() === "/documents" && request.method === "POST" ? next() : jsonParser(request, response, next));
 
@@ -42,23 +69,24 @@
     // else, redirecting to the root
     app.use((request, response) => response.redirect("/"));
 
-    console.log(`Trying to bind on port ${config.server.port}...`);
+    const PORT = parseInt(process.env.PORT);
+    console.log(`Trying to bind on port ${PORT}...`);
 
     // ssl
-    if (config.ssl.enabled) {
+    if (process.env.SSL_ENABLED === 'true') {
         const https = require('https');
         const fs = require('fs');
 
         const httpsServer = https.createServer({
-            key: fs.readFileSync(config.ssl.privkey),
-            cert: fs.readFileSync(config.ssl.fullchain),
+            key: fs.readFileSync(process.env.SSL_PRIVKEY),
+            cert: fs.readFileSync(process.env.SSL_FULLCHAIN),
         }, app);
 
-        httpsServer.listen(config.server.port, () => {
-            console.log(`Now listening on port ${config.server.port}.`);
+        httpsServer.listen(PORT, () => {
+            console.log(`Now listening on port ${PORT}.`);
         });
     } else {
-        app.listen(config.server.port, console.log(`Now listening on port ${config.server.port}.`));
+        app.listen(PORT, console.log(`Now listening on port ${PORT}.`));
     }
 
     // commands
@@ -70,5 +98,3 @@
 
     console.log(`Done (${Date.now() - launchMillis}ms). Execute '${defaultCommand.name}' for a list of all commands.`)
 })();
-
-

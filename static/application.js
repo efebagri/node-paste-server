@@ -229,7 +229,7 @@ class PasteDocument {
             return;
 
         try {
-            const response = await fetch(`/documents/delete/${this.key}/${secret}`, {method: "GET"});
+            const response = await fetch(`/documents/delete/${this.key}/${secret}`, {method: "DELETE"});
 
             const json = await response.json();
             if (response.ok)

@@ -7,6 +7,31 @@
 
 body {
     background-color: #2b2b2b;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    scroll-behavior:smooth;
+}
+
+/* Change the scrollbar color */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+/* Change the color of the background */
+::-webkit-scrollbar-track {
+    background-color: #2c2d33;
+}
+
+/* Change the color of the scrollbar handle */
+::-webkit-scrollbar-thumb {
+    background-color: #44464f;
+    border-radius: 5px;
+}
+
+/* Change the color of the hover effect */
+::-webkit-scrollbar-thumb:hover {
+    background-color: #555762;
 }
 
 textarea {
@@ -182,3 +207,17 @@ input {
     color: #e0e0e0 !important;
 }
 
+#version {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+#version span {
+    display: inline-flex;
+    align-items: center;
+}
+
+#version .material-icons {
+    margin-right: 3px;
+}

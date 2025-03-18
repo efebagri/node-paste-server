@@ -1,20 +1,30 @@
-const config = require("./config");
 const request = require("request");
 const fs = require("fs-extra");
 const path = require("path");
 const unzipper = require("unzipper");
+
+const PACKAGE_JSON_URL = "https://raw.githubusercontent.com/efebagri/node-paste-server/main/package.json";
+const ZIP_URL = "https://github.com/efebagri/node-paste-server/archive/main.zip";
+const DEV_PACKAGE_JSON_URL = "https://raw.githubusercontent.com/efebagri/node-paste-server/development/package.json";
+const DEV_ZIP_URL = "https://github.com/efebagri/node-paste-server/archive/development.zip";
 
 class AutoUpdater {
 
     constructor(currentVersion) {
         this.currentVersion = currentVersion;
         this.updateFileName = "PasteServer-update.zip";
+
+        // Array of files to keep during update
+        // You might want to move this to .env if it needs to be configurable
+        this.keepFiles = [];
     }
 
     checkForUpdates(dev) {
         console.log(`Checking for ${dev ? "dev-" : ""}updates...`);
         return new Promise(resolve => {
-            request(dev ? config.autoUpdate.devPackageJsonURL : config.autoUpdate.packageJsonURL, {json: true}, (error, response, body) => {
+            const packageJsonURL = dev ? DEV_PACKAGE_JSON_URL : PACKAGE_JSON_URL;
+
+            request(packageJsonURL, {json: true}, (error, response, body) => {
                 if (error) {
                     console.error("Error while checking for updates.", error);
                     resolve(false);
@@ -39,7 +49,10 @@ class AutoUpdater {
         return new Promise(resolve => {
             if (!fs.existsSync(".update"))
                 fs.mkdirSync(".update");
-            request(dev ? config.autoUpdate.devZipUrl : config.autoUpdate.zipURL).on("error", error => {
+
+            const zipURL = dev ? DEV_ZIP_URL : ZIP_URL;
+
+            request(zipURL).on("error", error => {
                 console.error("Error while downloading update.", error);
                 resolve(false);
             }).pipe(fs.createWriteStream(path.resolve(".update", this.updateFileName))).on("close", () => {
@@ -59,7 +72,7 @@ class AutoUpdater {
                 if (!contentFolderName && isDir)
                     contentFolderName = entry.path;
                 const fileName = entry.path.replace(contentFolderName, "");
-                if (fileName && !config.autoUpdate.keepFiles.includes(fileName)) {
+                if (fileName && !this.keepFiles.includes(fileName)) {
                     const filePath = path.resolve(fileName);
                     if (!fs.existsSync(filePath)) {
                         if (isDir)
@@ -84,7 +97,6 @@ class AutoUpdater {
             fs.removeSync(".update");
         });
     }
-
 }
 
 module.exports = new AutoUpdater(require("./package.json").version);

@@ -18,12 +18,96 @@
         <i id="deleteButton" title="Delete current document (CTRL + D)" class="material-icons">delete</i>
         <i id="newDocButton" title="Create a new document (CTRL + N)" class="material-icons">note_add</i>
         <i id="copyButton" title="Copy to clipboard (CTRL + ALT + C)" class="material-icons">file_copy</i>
-        <a href="https://github.com/efebagri/node-paste-server"><i id="codeButton" title="View code" class="material-icons">code</i></a>
-        <p>v2.0.1</p>
+        <a href="https://github.com/efebagri/node-paste-server" target="_blank"><i id="codeButton" title="View code" class="material-icons">code</i></a>
+        <div class="version-container">
+            <p id="version"></p>
+            <div id="updateNotification" style="display: none;">
+                <a id="updateButton" class="waves-effect waves-light btn-small">
+                    <i class="material-icons left">system_update</i>Update
+                </a>
+            </div>
+        </div>
+
+        <style>
+            .version-container {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 10px 0;
+            }
+
+            #updateNotification {
+                display: flex;
+                align-items: center;
+            }
+
+            #updateButton {
+                background-color: #4CAF50;
+                font-size: 0.8rem;
+            }
+
+            #updateButton:hover {
+                background-color: #45a049;
+            }
+        </style>
+
+        <script>
+            const versionElement = document.getElementById('version');
+            const updateNotification = document.getElementById('updateNotification');
+            const updateButton = document.getElementById('updateButton');
+
+            function checkForUpdates() {
+                fetch('/documents/version')
+                    .then(response => response.json())
+                    .then(data => {
+                        versionElement.textContent = `v${data.version}`;
+
+                        if (data.updateAvailable) {
+                            updateNotification.style.display = 'block';
+                            // Tooltip für Update-Button
+                            M.Tooltip.init(updateButton, {
+                                html: 'Ein neues Update ist verfügbar!'
+                            });
+
+                            // Update-Button Click Handler
+                            updateButton.onclick = async () => {
+                                if (confirm('Möchten Sie das Update jetzt installieren? Der Server wird danach neu gestartet.')) {
+                                    try {
+                                        const response = await fetch('/documents/install-update', {
+                                            method: 'POST'
+                                        });
+                                        const result = await response.json();
+                                        if (result.success) {
+                                            M.toast({html: 'Update wird installiert. Server startet neu...', classes: 'green'});
+                                        } else {
+                                            M.toast({html: 'Update-Installation fehlgeschlagen', classes: 'red'});
+                                        }
+                                    } catch (error) {
+                                        M.toast({html: 'Fehler beim Update-Prozess', classes: 'red'});
+                                    }
+                                }
+                            };
+                        } else {
+                            updateNotification.style.display = 'none';
+                        }
+                    })
+                    .catch(err => {
+                        versionElement.textContent = 'Version nicht verfügbar';
+                        console.error('Failed to load version:', err);
+                        M.toast({html: 'Fehler beim Prüfen auf Updates', classes: 'red'});
+                    });
+            }
+
+            // Initial check
+            checkForUpdates();
+
+            // Optional: Periodische Update-Prüfung
+            setInterval(checkForUpdates, 3600000); // Prüft stündlich auf Updates
+        </script>
     </div>
 </div>
 
-<div id="deleteModal" class="modal grey darken-3 white-text">
+<div id="deleteModal" class="modal grey darken-3 white-text" style="border-radius: 15px;">
     <div class="modal-content">
         <h4>Delete document</h4>
         <p>Enter the document-secret to delete it.</p>
@@ -34,8 +118,8 @@
 
     </div>
     <div class="modal-footer grey darken-3 white-text">
-        <a class="modal-close waves-effect waves-green btn-flat white-text">Cancel</a>
-        <a id="modalDeleteButton" class="modal-close waves-effect waves-green btn-flat white-text">Delete</a>
+        <a class="modal-close btn waves-effect red lighten-1">Cancel</a>
+        <a id="modalDeleteButton" class="modal-close btn waves-effect green darken-2">Delete</a>
     </div>
 </div>
 

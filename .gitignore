@@ -3,8 +3,11 @@
 *.iml
 
 # files
+.env
 documents
 data
 
 # Node
 node_modules
+package-lock.json
+yarn.lock
