@@ -8,7 +8,6 @@ A 🌟 powerful and efficient server to upload and manage text or code snippets.
 ## 🚀 Features
 
 - 🔧 **Multiple Storage Options**: Supports `Redis`, `ArangoDB`, or simple file storage
-- 🔁 **Automatic Fallback**: Falls back to file storage if database connection fails
 - 🔐 **Encryption Support**: Optional AES-256-GCM encryption for stored documents
 - ⚙️ **Configurable**: Fully customizable settings for rate limits, document size, and more
 - 📡 **API Integration**: RESTful API to create, read, and delete documents

@@ -53,7 +53,6 @@
             }
         };
 
-        // Vorbereiten der Verbindung
         await documentStorage.prepare(storageConfig);
 
         console.log(`${database.charAt(0).toUpperCase() + database.slice(1)} storage initialized successfully`);
