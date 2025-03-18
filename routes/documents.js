@@ -45,30 +45,6 @@ router.get("/version", async (request, response) => {
     }
 });
 
-router.post("/install-update", async (request, response) => {
-    response.setHeader("Content-Type", "application/json");
-
-    try {
-        const dev = request.body.dev || false;
-
-        response.json({
-            success: true,
-            message: "Update wird installiert. Server startet neu..."
-        });
-
-        setTimeout(async () => {
-            await autoUpdater.installUpdate(dev);
-        }, 1000);
-
-    } catch (error) {
-        console.error("Update-Fehler:", error);
-        response.status(500).json({
-            success: false,
-            error: "Update-Installation fehlgeschlagen"
-        });
-    }
-});
-
 router.post("/", rateLimitHandler, rawBodyHandler, async (request, response) => {
     const text = request.rawBody;
     response.setHeader("Content-Type", "application/json");

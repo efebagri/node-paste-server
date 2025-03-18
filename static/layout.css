@@ -209,21 +209,34 @@ input {
 
 .version-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    margin: 10px 0;
+    margin-top: 10px;
 }
 
-#updateNotification {
+.version-info {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 5px;
 }
 
-#updateButton {
-    background-color: #4CAF50;
-    font-size: 0.8rem;
+#version {
+    margin: 0;
+    text-align: center;
 }
 
-#updateButton:hover {
-    background-color: #45a049;
+.chip {
+    background-color: #26a69a;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 16px;
+    font-size: 13px;
+}
+
+.chip .material-icons.left {
+    font-size: 16px;
+    margin-right: 4px;
 }

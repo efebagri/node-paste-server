@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow"/>
+
+    <!-- Basic Meta Tags -->
+    <meta name="author" content="Efe Bagri"/>
+    <meta name="copyright" content="© 2025 Efe Bagri. All rights reserved."/>
+    <meta name="description" content="PasteServer - A simple and efficient text sharing service"/>
+
     <title>PasteServer</title>
+
+    <!-- Essential Styles -->
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/androidstudio.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
@@ -22,11 +31,14 @@
             <i id="codeButton" title="View code" class="material-icons">code</i>
         </a>
         <div class="version-container">
-            <p id="version"></p>
-            <div id="updateNotification" style="display: none;">
-                <a id="updateButton" class="waves-effect waves-light btn-small">
-                    <i class="material-icons left">system_update</i>Update
-                </a>
+            <div class="version-info">
+                <p id="version"></p>
+                <div id="updateNotification" style="display: none;">
+                    <div class="chip">
+                        <i class="material-icons left">new_releases</i>
+                        Update available!
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -54,6 +66,7 @@
 <textarea class="textArea" spellcheck="false"></textarea>
 <div class="textBar"><p></p><i class="material-icons">close</i></div>
 
+<!-- Essential Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
 <script type="text/javascript" src="application.js"></script>
@@ -62,7 +75,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const versionElement = document.getElementById('version');
         const updateNotification = document.getElementById('updateNotification');
-        const updateButton = document.getElementById('updateButton');
 
         const modalElems = document.querySelectorAll('.modal');
         M.Modal.init(modalElems);
@@ -79,51 +91,23 @@
                 })
                 .then(data => {
                     versionElement.textContent = `v${data.version}`;
-                    updateNotification.style.display = data.updateAvailable ? 'block' : 'none';
-
                     if (data.updateAvailable) {
-                        const tooltip = M.Tooltip.getInstance(updateButton);
-                        if (tooltip) {
-                            tooltip.destroy();
-                        }
-                        M.Tooltip.init(updateButton, {
-                            html: `New version ${data.newVersion || ''} available!`
+                        updateNotification.style.display = 'block';
+                        M.toast({
+                            html: `New Version ${data.newVersion} available!`,
+                            classes: 'blue'
                         });
+                    } else {
+                        updateNotification.style.display = 'none';
                     }
                 })
                 .catch(err => {
                     console.error('Version check failed:', err);
                     versionElement.textContent = 'Version not available';
-                    M.toast({html: 'Error when checking for updates', classes: 'red'});
                 });
         }
 
-        document.getElementById('updateButton').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/documents/install-update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    M.toast({html: 'Update wird installiert. Bitte warten...', classes: 'green'});
-
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 5000);
-                } else {
-                    throw new Error('Update fehlgeschlagen');
-                }
-            } catch (error) {
-                console.error('Update error:', error);
-                M.toast({html: 'Update fehlgeschlagen', classes: 'red'});
-            }
-        });
-
         checkForUpdates();
-
         setInterval(checkForUpdates, 3600000);
     });
 </script>
