@@ -51,19 +51,15 @@ router.post("/install-update", async (request, response) => {
     try {
         const dev = request.body.dev || false;
 
-        const result = await autoUpdater.installUpdate(dev);
+        response.json({
+            success: true,
+            message: "Update wird installiert. Server startet neu..."
+        });
 
-        if (result.success) {
-            response.json({
-                success: true,
-                message: "Update wird installiert. Server startet neu..."
-            });
-        } else {
-            response.status(500).json({
-                success: false,
-                error: result.error || "Update-Installation fehlgeschlagen"
-            });
-        }
+        setTimeout(async () => {
+            await autoUpdater.installUpdate(dev);
+        }, 1000);
+
     } catch (error) {
         console.error("Update-Fehler:", error);
         response.status(500).json({

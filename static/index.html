@@ -98,32 +98,27 @@
                 });
         }
 
-        updateButton.addEventListener('click', async () => {
-            if (confirm('Would you like to install the update now? The server will then be restarted.')) {
-                try {
-                    M.toast({html: 'Update is being downloaded...', classes: 'blue'});
-                    const response = await fetch('/documents/install-update', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+        document.getElementById('updateButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/documents/install-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
+                });
 
-                    const result = await response.json();
-                    if (result.success) {
-                        M.toast({html: result.message || 'Update is being installed. Server restarts...', classes: 'green'});
-                        setTimeout(() => window.location.reload(), 3000);
-                    } else {
-                        M.toast({html: result.error || 'Update installation failed', classes: 'red'});
-                    }
-                } catch (error) {
-                    console.error('Update error:', error);
-                    M.toast({html: 'Error during the update process', classes: 'red'});
+                if (response.ok) {
+                    M.toast({html: 'Update wird installiert. Bitte warten...', classes: 'green'});
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 5000);
+                } else {
+                    throw new Error('Update fehlgeschlagen');
                 }
+            } catch (error) {
+                console.error('Update error:', error);
+                M.toast({html: 'Update fehlgeschlagen', classes: 'red'});
             }
         });
 

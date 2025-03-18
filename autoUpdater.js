@@ -79,7 +79,6 @@ class AutoUpdater {
 
     async installUpdate(dev = false) {
         console.log("Installing update...");
-        let contentFolderName = "";
 
         try {
             const updatePath = path.resolve(".update", this.updateFileName);
@@ -92,62 +91,38 @@ class AutoUpdater {
                 }
             }
 
-            return new Promise((resolve) => {
-                fs.createReadStream(updatePath)
-                    .pipe(unzipper.Parse())
-                    .on("entry", entry => {
-                        try {
-                            const isDir = entry.type === "Directory";
-                            if (!contentFolderName && isDir) {
-                                contentFolderName = entry.path;
-                            }
-                            const fileName = entry.path.replace(contentFolderName, "");
+            console.log("Successfully installed update!");
+            console.log("Server is restarting...");
 
-                            if (fileName && !this.keepFiles.includes(fileName)) {
-                                const filePath = path.resolve(fileName);
-                                const fileDir = path.dirname(filePath);
-
-                                if (!fs.existsSync(fileDir)) {
-                                    fs.mkdirSync(fileDir, { recursive: true });
-                                }
-
-                                if (isDir) {
-                                    if (!fs.existsSync(filePath)) {
-                                        fs.mkdirSync(filePath, { recursive: true });
-                                    }
-                                    entry.autodrain();
-                                } else {
-                                    entry.pipe(fs.createWriteStream(filePath));
-                                }
-                            } else {
-                                entry.autodrain();
-                            }
-                        } catch (error) {
-                            console.error("Error while processing:", error);
-                            entry.autodrain();
-                        }
-                    })
-                    .on("error", error => {
-                        console.error("Installation failed:", error);
-                        this.cleanup();
-                        resolve({ success: false, error: "Installation failed" });
-                    })
-                    .on("close", () => {
-                        console.log("Successfully installed update!");
-                        this.cleanup();
-                        resolve({ success: true });
-
-                        setTimeout(() => {
-                            console.log("Server is restarting...");
-                            process.exit(0);
-                        }, 1000);
+            setTimeout(() => {
+                if (global.server) {
+                    global.server.close(() => {
+                        this.startNewServer();
                     });
-            });
+                } else {
+                    this.startNewServer();
+                }
+            }, 2000);
+
+            return { success: true };
+
         } catch (error) {
-            console.error("Update error:", error);
-            this.cleanup();
-            return { success: false, error: error.message };
+            console.error("Error during update installation:", error);
+            return {
+                success: false,
+                error: error.message
+            };
         }
+    }
+
+    startNewServer() {
+        const { spawn } = require('child_process');
+        const child = spawn('node', ['index.js'], {
+            detached: true,
+            stdio: 'inherit'
+        });
+        child.unref();
+        process.exit(0);
     }
 
     cleanup() {
