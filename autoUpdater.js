@@ -12,9 +12,6 @@ class AutoUpdater {
     constructor(currentVersion) {
         this.currentVersion = currentVersion;
         this.updateFileName = "PasteServer-update.zip";
-
-        // Array of files to keep during update
-        // You might want to move this to .env if it needs to be configurable
         this.keepFiles = [];
     }
 
@@ -46,7 +43,6 @@ class AutoUpdater {
     downloadUpdate(dev) {
         console.log(`Downloading ${dev ? "dev-" : ""}update...`);
         return new Promise(resolve => {
-            // Ensure update directory exists
             const updateDir = path.resolve(".update");
             if (!fs.existsSync(updateDir)) {
                 fs.mkdirSync(updateDir);
@@ -73,7 +69,7 @@ class AutoUpdater {
         });
     }
 
-    async installUpdate() {
+    async installUpdate(dev = false) {
         console.log("Installing update...");
         let contentFolderName = "";
 
@@ -81,8 +77,8 @@ class AutoUpdater {
             const updatePath = path.resolve(".update", this.updateFileName);
 
             if (!fs.existsSync(updatePath)) {
-                console.error("Update file not found. Attempting to download...");
-                const downloaded = await this.downloadUpdate(false);
+                console.log("Update file not found. Downloading...");
+                const downloaded = await this.downloadUpdate(dev);
                 if (!downloaded) {
                     throw new Error("Failed to download update file");
                 }
@@ -103,7 +99,6 @@ class AutoUpdater {
                                 const filePath = path.resolve(fileName);
                                 const fileDir = path.dirname(filePath);
 
-                                // Ensure directory exists
                                 if (!fs.existsSync(fileDir)) {
                                     fs.mkdirSync(fileDir, { recursive: true });
                                 }
@@ -114,49 +109,44 @@ class AutoUpdater {
                                     }
                                     entry.autodrain();
                                 } else {
-                                    console.log(`Replacing ${fileName}`);
                                     entry.pipe(fs.createWriteStream(filePath));
                                 }
                             } else {
                                 entry.autodrain();
                             }
                         } catch (error) {
-                            console.error("Error processing entry:", error);
+                            console.error("Error while processing:", error);
                             entry.autodrain();
                         }
                     })
                     .on("error", error => {
-                        console.error("Error while installing update:", error);
-                        // Try to clean up on error
-                        try {
-                            fs.removeSync(".update");
-                        } catch (cleanupError) {
-                            console.error("Error during cleanup:", cleanupError);
-                        }
-                        resolve(false);
+                        console.error("Installation failed:", error);
+                        this.cleanup();
+                        resolve({ success: false, error: "Installation failed" });
                     })
                     .on("close", () => {
-                        // Only cleanup after successful installation
-                        try {
-                            fs.removeSync(".update");
-                            console.log("Successfully installed update!");
-                            console.log("Stopping the PasteServer for the update to be usable...");
+                        console.log("Successfully installed update!");
+                        this.cleanup();
+                        resolve({ success: true });
+
+                        setTimeout(() => {
+                            console.log("Server is restarting...");
                             process.exit(0);
-                        } catch (error) {
-                            console.error("Error during cleanup:", error);
-                            resolve(false);
-                        }
+                        }, 1000);
                     });
             });
         } catch (error) {
-            console.error("Installation failed:", error);
-            // Final cleanup attempt
-            try {
-                fs.removeSync(".update");
-            } catch (cleanupError) {
-                console.error("Error during cleanup:", cleanupError);
-            }
-            throw error;
+            console.error("Update error:", error);
+            this.cleanup();
+            return { success: false, error: error.message };
+        }
+    }
+
+    cleanup() {
+        try {
+            fs.removeSync(".update");
+        } catch (error) {
+            console.error("Cleanup error:", error);
         }
     }
 }
