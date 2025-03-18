@@ -1,6 +1,6 @@
 {
   "name": "exbil-paste-server",
-  "version": "2.0.0",
+  "version": "2.0.4",
   "description": "Exbil Paste Server to upload text or code",
   "repository": "https://github.com/exbil/exbil-paste-server",
   "authors": [
