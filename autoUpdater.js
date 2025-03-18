@@ -28,7 +28,15 @@ class AutoUpdater {
                 }
 
                 const newestVersion = body.version;
-                if (newestVersion !== this.currentVersion) {
+                const current = this.currentVersion.split('.').map(Number);
+                const newest = newestVersion.split('.').map(Number);
+
+                // Vergleiche Versionen
+                const needsUpdate = newest[0] > current[0] ||
+                    (newest[0] === current[0] && newest[1] > current[1]) ||
+                    (newest[0] === current[0] && newest[1] === current[1] && newest[2] > current[2]);
+
+                if (needsUpdate) {
                     console.log(`There's a newer ${dev ? "dev-" : ""}version of the PasteServer available (${newestVersion})!`);
                     console.log(`Execute 'installUpdate${dev ? " -dev" : ""}' to download it!`);
                     resolve(true);
