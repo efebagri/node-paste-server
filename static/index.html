@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow"/>
+
+    <!-- Basic Meta Tags -->
+    <meta name="author" content="Efe Bagri"/>
+    <meta name="copyright" content="© 2025 Efe Bagri. All rights reserved."/>
+    <meta name="description" content="PasteServer - A simple and efficient text sharing service"/>
+
+    <title>PasteServer</title>
+
+    <!-- Essential Styles -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/androidstudio.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="layout.css">
+</head>
+<body>
+
+<div class="side-panel">
+    <div class="collapse-button"></div>
+    <div class="buttons">
+        <i id="saveButton" title="Save current document (CTRL + S)" class="material-icons">save</i>
+        <i id="deleteButton" title="Delete current document (CTRL + D)" class="material-icons">delete</i>
+        <i id="newDocButton" title="Create a new document (CTRL + N)" class="material-icons">note_add</i>
+        <i id="copyButton" title="Copy to clipboard (CTRL + ALT + C)" class="material-icons">file_copy</i>
+        <a href="https://github.com/efebagri/node-paste-server" target="_blank">
+            <i id="codeButton" title="View code" class="material-icons">code</i>
+        </a>
+        <div class="version-container">
+            <div class="version-info">
+                <p id="version"></p>
+                <div id="updateNotification" style="display: none;">
+                    <div class="chip">
+                        <i class="material-icons left">new_releases</i>
+                        Update available!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal grey darken-3 white-text" style="border-radius: 15px;">
+    <div class="modal-content">
+        <h4>Delete document</h4>
+        <p>Enter the document-secret to delete it.</p>
+        <div class="input-field">
+            <input id="deleteSecretInput" type="text">
+            <label for="deleteSecretInput">Delete-Secret</label>
+        </div>
+    </div>
+    <div class="modal-footer grey darken-3 white-text">
+        <a class="modal-close btn waves-effect green lighten-1">Cancel</a>
+        <a id="modalDeleteButton" class="modal-close btn waves-effect red darken-2">Delete</a>
+    </div>
+</div>
+
+<pre id="codeBox" class="hljs">
+    <div class="codeLines"></div>
+    <code></code>
+</pre>
+<textarea class="textArea" spellcheck="false"></textarea>
+<div class="textBar"><p></p><i class="material-icons">close</i></div>
+
+<!-- Essential Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+<script type="text/javascript" src="application.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const versionElement = document.getElementById('version');
+        const updateNotification = document.getElementById('updateNotification');
+
+        const modalElems = document.querySelectorAll('.modal');
+        M.Modal.init(modalElems);
+
+        function checkForUpdates() {
+            fetch('/documents/version', {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    versionElement.textContent = `v${data.version}`;
+                    if (data.updateAvailable) {
+                        updateNotification.style.display = 'block';
+                        M.toast({
+                            html: `New Version ${data.newVersion} available!`,
+                            classes: 'blue'
+                        });
+                    } else {
+                        updateNotification.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Version check failed:', err);
+                    versionElement.textContent = 'Version not available';
+                });
+        }
+
+        checkForUpdates();
+        setInterval(checkForUpdates, 3600000);
+    });
+</script>
+
+</body>
+</html>
