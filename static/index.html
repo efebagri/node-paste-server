@@ -18,7 +18,9 @@
         <i id="deleteButton" title="Delete current document (CTRL + D)" class="material-icons">delete</i>
         <i id="newDocButton" title="Create a new document (CTRL + N)" class="material-icons">note_add</i>
         <i id="copyButton" title="Copy to clipboard (CTRL + ALT + C)" class="material-icons">file_copy</i>
-        <a href="https://github.com/efebagri/node-paste-server" target="_blank"><i id="codeButton" title="View code" class="material-icons">code</i></a>
+        <a href="https://github.com/efebagri/node-paste-server" target="_blank">
+            <i id="codeButton" title="View code" class="material-icons">code</i>
+        </a>
         <div class="version-container">
             <p id="version"></p>
             <div id="updateNotification" style="display: none;">
@@ -27,83 +29,6 @@
                 </a>
             </div>
         </div>
-
-        <style>
-            .version-container {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin: 10px 0;
-            }
-
-            #updateNotification {
-                display: flex;
-                align-items: center;
-            }
-
-            #updateButton {
-                background-color: #4CAF50;
-                font-size: 0.8rem;
-            }
-
-            #updateButton:hover {
-                background-color: #45a049;
-            }
-        </style>
-
-        <script>
-            const versionElement = document.getElementById('version');
-            const updateNotification = document.getElementById('updateNotification');
-            const updateButton = document.getElementById('updateButton');
-
-            function checkForUpdates() {
-                fetch('/documents/version')
-                    .then(response => response.json())
-                    .then(data => {
-                        versionElement.textContent = `v${data.version}`;
-
-                        if (data.updateAvailable) {
-                            updateNotification.style.display = 'block';
-                            // Tooltip für Update-Button
-                            M.Tooltip.init(updateButton, {
-                                html: 'Ein neues Update ist verfügbar!'
-                            });
-
-                            // Update-Button Click Handler
-                            updateButton.onclick = async () => {
-                                if (confirm('Möchten Sie das Update jetzt installieren? Der Server wird danach neu gestartet.')) {
-                                    try {
-                                        const response = await fetch('/documents/install-update', {
-                                            method: 'POST'
-                                        });
-                                        const result = await response.json();
-                                        if (result.success) {
-                                            M.toast({html: 'Update wird installiert. Server startet neu...', classes: 'green'});
-                                        } else {
-                                            M.toast({html: 'Update-Installation fehlgeschlagen', classes: 'red'});
-                                        }
-                                    } catch (error) {
-                                        M.toast({html: 'Fehler beim Update-Prozess', classes: 'red'});
-                                    }
-                                }
-                            };
-                        } else {
-                            updateNotification.style.display = 'none';
-                        }
-                    })
-                    .catch(err => {
-                        versionElement.textContent = 'Version nicht verfügbar';
-                        console.error('Failed to load version:', err);
-                        M.toast({html: 'Fehler beim Prüfen auf Updates', classes: 'red'});
-                    });
-            }
-
-            // Initial check
-            checkForUpdates();
-
-            // Optional: Periodische Update-Prüfung
-            setInterval(checkForUpdates, 3600000); // Prüft stündlich auf Updates
-        </script>
     </div>
 </div>
 
@@ -115,7 +40,6 @@
             <input id="deleteSecretInput" type="text">
             <label for="deleteSecretInput">Delete-Secret</label>
         </div>
-
     </div>
     <div class="modal-footer grey darken-3 white-text">
         <a class="modal-close btn waves-effect red lighten-1">Cancel</a>
@@ -133,5 +57,81 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
 <script type="text/javascript" src="application.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const versionElement = document.getElementById('version');
+        const updateNotification = document.getElementById('updateNotification');
+        const updateButton = document.getElementById('updateButton');
+
+        const modalElems = document.querySelectorAll('.modal');
+        M.Modal.init(modalElems);
+
+        function checkForUpdates() {
+            fetch('/documents/version', {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    versionElement.textContent = `v${data.version}`;
+                    updateNotification.style.display = data.updateAvailable ? 'block' : 'none';
+
+                    if (data.updateAvailable) {
+                        const tooltip = M.Tooltip.getInstance(updateButton);
+                        if (tooltip) {
+                            tooltip.destroy();
+                        }
+                        M.Tooltip.init(updateButton, {
+                            html: `New version ${data.newVersion || ''} available!`
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Version check failed:', err);
+                    versionElement.textContent = 'Version not available';
+                    M.toast({html: 'Error when checking for updates', classes: 'red'});
+                });
+        }
+
+        updateButton.addEventListener('click', async () => {
+            if (confirm('Would you like to install the update now? The server will then be restarted.')) {
+                try {
+                    M.toast({html: 'Update is being downloaded...', classes: 'blue'});
+                    const response = await fetch('/documents/install-update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        M.toast({html: result.message || 'Update is being installed. Server restarts...', classes: 'green'});
+                        setTimeout(() => window.location.reload(), 3000);
+                    } else {
+                        M.toast({html: result.error || 'Update installation failed', classes: 'red'});
+                    }
+                } catch (error) {
+                    console.error('Update error:', error);
+                    M.toast({html: 'Error during the update process', classes: 'red'});
+                }
+            }
+        });
+
+        checkForUpdates();
+
+        setInterval(checkForUpdates, 3600000);
+    });
+</script>
+
 </body>
 </html>

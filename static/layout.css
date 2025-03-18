@@ -207,17 +207,23 @@ input {
     color: #e0e0e0 !important;
 }
 
-#version {
+.version-container {
     display: flex;
     align-items: center;
+    gap: 10px;
     margin: 10px 0;
 }
 
-#version span {
-    display: inline-flex;
+#updateNotification {
+    display: flex;
     align-items: center;
 }
 
-#version .material-icons {
-    margin-right: 3px;
+#updateButton {
+    background-color: #4CAF50;
+    font-size: 0.8rem;
+}
+
+#updateButton:hover {
+    background-color: #45a049;
 }
