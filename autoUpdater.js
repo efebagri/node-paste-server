@@ -12,7 +12,7 @@ class AutoUpdater {
     constructor(currentVersion) {
         this.currentVersion = currentVersion;
         this.updateFileName = "PasteServer-update.zip";
-        this.keepFiles = [];
+        this.keepFiles = []; // Example: ["static/index.html"]
     }
 
     checkForUpdates(dev) {
