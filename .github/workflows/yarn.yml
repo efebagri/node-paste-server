@@ -1,0 +1,32 @@
+name: Yarn Install
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Yarn dependencies
+        run: yarn upgrade
+
+      - name: Validate package.json and yarn.lock
+        run: yarn check --verify-tree
+
+      - name: Cache Yarn packages
+        id: yarn-cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: yarn install --prefer-offline --no-progress
