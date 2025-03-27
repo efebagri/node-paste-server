@@ -13,11 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update Yarn dependencies
-        run: yarn upgrade
-
-      - name: Validate package.json and yarn.lock
-        run: yarn check --verify-tree
+      - name: Install dependencies
+        run: yarn install --prefer-offline --no-progress
 
       - name: Cache Yarn packages
         id: yarn-cache
@@ -28,5 +25,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies
-        run: yarn install --prefer-offline --no-progress
+      - name: Update Yarn dependencies
+        run: yarn upgrade
+
+      - name: Validate package.json and yarn.lock
+        run: yarn check --verify-tree
